@@ -1,20 +1,17 @@
-# Builds the page and publishes it to GitHub Pages. Manual fallback only — Cloudflare Pages is
-# the live deploy path.
+# Builds the page and publishes it to GitHub Pages. This is the live deploy path.
 #
-# Repo setting required once, by hand: Settings → Pages → Build and deployment →
-# Source: "GitHub Actions". Without it this workflow runs and the deploy step fails.
+# No repo setting has to be changed by hand: the configure-pages step below runs with
+# `enablement: true`, so the first run turns Pages on itself using the workflow's own
+# GITHUB_TOKEN and the `pages: write` permission granted here.
 #
 # build.mjs has no dependencies — no npm install, no lockfile — so this is just Node
 # and the checkout. It content-hashes everything under assets/, css/ and js/ and
 # rewrites the references, which is what makes the immutable cache headers safe.
 name: Deploy page to GitHub Pages
 
-# Manual only. Cloudflare Pages is the deploy path (see README), and it builds this repo on every
-# push by itself. Leaving this on `push` would run a second, competing deploy whose final step fails
-# whenever GitHub Pages is not enabled, putting a red cross on every commit. Kept, not deleted, so
-# GitHub Pages stays available as a fallback: run it from the Actions tab, and enable
-# Settings -> Pages -> Source -> GitHub Actions first.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -42,6 +39,10 @@ jobs:
       - name: Disable Jekyll
         run: touch dist/.nojekyll
       - uses: actions/configure-pages@v5
+        with:
+          # Turns Pages on if it is off, instead of failing the deploy and leaving a red
+          # cross on the commit. Needs the pages: write permission declared above.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
