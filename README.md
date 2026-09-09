@@ -8,7 +8,15 @@ The repository is `softfractal/aspirium`, **public**, default branch `main`. Thi
 root — the rest of the ASPIRIUM project, Blender masters and export pipeline and 1.6 GB of it, is
 deliberately outside.
 
-**Vercel, built from this GitHub repo, is the current deploy path.** `vercel.json` holds the whole
+**GitHub Pages, built by Actions, is the live deploy path** (Eric, 2026-09-09). Settings → Pages →
+Source is set to *GitHub Actions*, a one-time manual step that no token available to this workflow
+could perform — the header of `.github/workflows/pages.yml` records the two automated routes that
+were tried and ruled out. Every push to `main` now builds and deploys.
+
+The notes below on Vercel and Cloudflare are kept because the bandwidth arithmetic still applies and
+this hosting choice is explicitly temporary.
+
+**Vercel, if the plan changes back.** `vercel.json` holds the whole
 configuration, so the import needs nothing typed into a form: import at vercel.com/new, grant access
 to `softfractal/aspirium`, done. It builds with `node build.mjs`, serves `dist/`, and skips the
 install step because there are no dependencies and no lockfile to keep in sync. Every push to `main`
