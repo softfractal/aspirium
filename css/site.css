@@ -1,0 +1,282 @@
+/* Signet by ASPIRIUM — coming-soon page.
+   Mode B tokens as custom properties (web_build_brief_v1_1 §9; hexes provisional until identity lock).
+   Technical-drawing details only: mono labels, generous void. No glows, gradients, shimmers or hover
+   sparkle — the only light on the page is inside the render. Divider rules removed 2026-09-07 (Eric). */
+
+/* Three faces, all SIL OFL 1.1: free for commercial use and web embedding, never sellable alone,
+   licence text shipped beside the files in assets/fonts/. Built by dev/build-fonts.sh. */
+@font-face {
+  /* display: labels, the submit control, the footer, the scroll cue */
+  font-family: "ASPIRIUM";
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;                       /* the mono labels never invisible-text */
+  src: url("../assets/fonts/ASPIRIUM-Light.woff2") format("woff2");
+}
+@font-face {
+  /* the lockup (Eric, 2026-09-09). Variable opsz 7..72 + wght 200..900 from one file: the lockup
+     runs from ~24 px to ~64 px in one composition, so optical sizing earns its bytes here. */
+  font-family: "Literata";
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/Literata-var.woff2") format("woff2-variations"),
+       url("../assets/fonts/Literata-var.woff2") format("woff2");
+}
+@font-face {
+  /* body and UI (Eric, 2026-09-09), replacing the provisional Source Code Pro. Variable wght
+     200..900; its optical-size axis is pinned at 20 because body copy sits at one size. */
+  font-family: "Source Serif 4";
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/SourceSerif4-var.woff2") format("woff2-variations"),
+       url("../assets/fonts/SourceSerif4-var.woff2") format("woff2");
+}
+
+:root {
+  --field: #000000;                          /* ruled 2026-09-07: pure black (was #141414) */
+  --field-2: #1D1D1B;
+  --text: #EAE7E1;
+  --muted: #9B968C;
+  --metal: #B08D57;
+  --metal-2: #C9A36B;
+  --band-h: clamp(360px, 48vh, 640px);      /* R2: desktop 45–50 vh, tuned live (dev/tune.html) */
+  --rule: color-mix(in srgb, var(--muted) 30%, var(--field));
+  --display: "ASPIRIUM", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --body: "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+  --lockup: "Literata", Georgia, "Times New Roman", serif;
+  --col: 44rem;
+  --col-mark: 52rem;                        /* the lockup runs wider than the text column */
+  --gutter: 1.5rem;
+  --light: var(--muted);                    /* the one accent; moves to --metal when the wordmark lights */
+}
+:root[data-light="warm"] { --light: var(--metal); }
+
+/* R4: on phones the band is ~1:1 and never more than ~60% of the screen — the camera is
+   vertical-fit, so a full-portrait band would crop the ring's sides. The hero panel around it
+   is a full screen; R3 (touch-action: pan-y) is what lets a finger on the band reach panel 2. */
+@media (max-width: 767px) {
+  :root { --band-h: min(100vw, 60vh); --col-mark: 44rem; }
+  @supports (height: 1svh) { :root { --band-h: min(100vw, 60svh); } }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { color-scheme: dark; background: var(--field); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--field);
+  color: var(--text);
+  font: 400 1rem/1.6 var(--body);
+  font-feature-settings: "kern";
+  min-height: 100vh;
+}
+[hidden] { display: none !important; }
+:focus-visible { outline: 1px solid var(--muted); outline-offset: 3px; }
+::selection { background: var(--muted); color: var(--field); }
+
+/* ---- panels: one screen each (Eric, 2026-09-09) ----
+   The hero sticks while the capture panel scrolls up over it; the hero's contents drift and fade
+   against that, which is the parallax. --p (0…1 across the first screen) is set by js/main.js. */
+.page { position: relative; }
+.panel { position: relative; }
+.panel--hero {
+  position: sticky; top: 0; z-index: 0;
+  height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(1.5rem, 4vh, 3rem);
+  overflow: hidden;
+}
+.hero__inner {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(1.5rem, 4vh, 3rem);
+  transform: translate3d(0, calc(var(--p, 0) * var(--drift, 9) * -1vh), 0);
+  opacity: calc(1 - var(--pf, 0) * var(--fade, .95));   /* --pf is --p remapped to finish early */
+  will-change: transform, opacity;
+}
+.cue {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  margin: 0; display: flex; line-height: 0;
+  color: var(--muted);
+  opacity: calc(1 - var(--p, 0) * var(--cue-fade, 3));
+  pointer-events: none;
+}
+.panel--capture {
+  z-index: 1;                               /* opaque, so it covers the sticky hero as it arrives */
+  background: var(--field);
+  min-height: 100vh;
+  /* the form sits in the middle of the screen, both axes (Eric, 2026-09-09 pm); the footer is
+     taken out of flow so it cannot pull the centring off-axis */
+  display: flex; align-items: center; justify-content: center;
+  padding: 5rem var(--gutter);
+}
+.panel--capture .sheet { padding: 0; }
+.panel--capture .foot { position: absolute; left: 0; right: 0; bottom: 0; }
+@supports (height: 1svh) {
+  .panel--hero { height: 100svh; }
+  .panel--capture { min-height: 100svh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero__inner { transform: none; opacity: 1; }
+  .cue { opacity: 1; }
+}
+
+/* ---- hero band ---- */
+.band {
+  position: relative;
+  width: 100%;
+  height: var(--band-h);
+  background: var(--field);                 /* black until the viewer is ready; the intro opens on black anyway */
+  overflow: hidden;
+}
+.band__mount, .band__poster { position: absolute; inset: 0; }
+.band__mount > canvas, .band__mount > iframe, .band__mount > .stub {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block; border: 0;
+}
+.stub { overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.stub img { width: 100%; height: 100%; object-fit: contain; display: block; opacity: 0; }
+.band__poster { display: none; }
+.band[data-state="poster"] .band__poster { display: block; }
+.band__poster img { width: 100%; height: 100%; object-fit: contain; display: block; background: var(--field); }
+
+/* ---- the capture panel's column ---- */
+.sheet { width: 100%; max-width: var(--col); margin: 0 auto; padding: 2rem var(--gutter) 3rem; }
+
+.serial {
+  margin: 0 0 2.5rem;
+  display: flex; flex-wrap: wrap; column-gap: .75em; row-gap: .25em;
+  font: 300 .9375rem/1.5 var(--display);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.serial > span:has(+ span:not(:empty))::after { content: "\2014"; margin-left: .75em; }
+.serial .slot:empty { display: none; }     /* R6: OPEN slots exist in the markup and render nothing */
+
+.headline {
+  margin: 0 0 1.5rem;
+  font: 300 clamp(1.75rem, 4vw, 3.25rem)/1.15 var(--display);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: var(--text);
+}
+.lede { margin: 0 0 2.5rem; max-width: 36rem; }
+
+/* ---- the lockup: live text in Literata, below the band and clear of the render ---- */
+.mark {
+  /* dropped by 25% of the band's height (Eric, 2026-09-09 pm). The hero centres its contents, so
+     this opens the gap by that much: the ring rises by half of it and the lockup falls by half. */
+  margin: calc(var(--band-h) * var(--mark-drop, .25)) 0 0;
+  max-width: min(92vw, var(--col-mark));
+  text-align: center; color: var(--text);          /* both lines white; the muted sub line is retired */
+  font-family: var(--lockup); font-weight: 300; font-style: normal;
+  font-optical-sizing: auto;                       /* Literata's opsz axis: text cut small, display cut large */
+  user-select: none; -webkit-user-select: none;
+}
+.mark__line { display: block; white-space: nowrap; }
+/* sizes swapped between the two lines, then both halved (Eric, 2026-09-09) */
+.mark__line--sub {
+  font-size: clamp(1.175rem, 4.3vw, 2.625rem);
+  letter-spacing: .09em;
+  line-height: 1.2;
+}
+.mark__line--name {
+  font-size: clamp(.525rem, 1.55vw, 1rem);
+  letter-spacing: .17em;
+  line-height: 1.05;
+  margin-top: 1em;                                 /* doubled from .5em (Eric); em here is this line's own size */
+  text-indent: .17em;                              /* balance the trailing letter-space so the line reads centred */
+}
+
+/* One cell per character (js/mark.js). The real glyph alone drives layout; the code glyph rides
+   over it absolutely, so nothing reflows at any size and no width is ever measured. */
+.ch { position: relative; display: inline-block; }
+.ch.is-pending .ch__real,
+.ch.is-fx .ch__real { visibility: hidden; }
+.ch__fx {
+  position: absolute; left: 0; top: 0; width: 100%;
+  text-align: center; letter-spacing: 0; pointer-events: none;
+}
+
+/* The opening beat: nothing is lit until the ring's animation starts and the decode's first frame
+   draws. The brief's intro already opens on 1.2 s of black, so the cue waits with the lockup.
+   Set by the inline script in <head> so there is no flash before js/main.js runs, and lifted by
+   main.js — either on the decode's first frame or, if the effect is not live, immediately. */
+:root.is-opening .mark,
+:root.is-opening .cue { opacity: 0; }
+
+.capture { max-width: 36rem; margin: 0 auto; position: relative; text-align: center; }
+.capture__row { justify-content: center; }
+.label {
+  display: block; margin-bottom: .75rem;
+  font: 400 .8125rem/1 var(--body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+.capture__row { display: flex; }
+/* Field and submit share one pill treatment (Eric, 2026-09-09): the same grey at rest, both going
+   white on hover and on focus. The border is the focus indicator, so `outline: none` is safe only
+   because grey-to-white is a large, obvious contrast step. */
+.capture input[type="email"] {
+  flex: 1 1 auto; min-width: 0; height: 3rem; padding: 0 .875rem;
+  background: transparent; border: 1px solid var(--rule); border-radius: 0;
+  color: var(--text); font: 400 1rem var(--body); outline: none;
+  transition: border-color .18s ease;
+}
+.capture input[type="email"]:hover,
+.capture input[type="email"]:focus { border-color: #fff; outline: none; }
+/* Its own line beneath the consent line, twice the padding (Eric, 2026-09-09). The pill now matches
+   the field's grey and goes white on hover and focus, exactly as the field does. The submit no
+   longer carries the brief's §2 warm-accent wiring — .received is the only element still on --light. */
+.submit {
+  display: block; margin: 1.75rem auto 0;
+  /* pill and label both at 75% of their previous size (Eric, 2026-09-09): 48 -> 36 px tall,
+     40 -> 30 px of side padding, 13 -> 9.75 px of type. */
+  height: 2.25rem; padding: 0 1.875rem;
+  background: transparent; border: 1px solid var(--rule); border-radius: 0;
+  color: var(--muted);                                  /* the consent line's grey */
+  font: 400 .609375rem/1 var(--body); letter-spacing: .16em; text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color .18s ease, color .18s ease;
+}
+/* label brightens with the pill: a white-bordered control with grey type reads half-lit */
+.submit:hover,
+.submit:focus-visible { border-color: #fff; color: #fff; outline: none; }
+.submit:disabled { cursor: default; opacity: .6; }
+.consent { margin: 1rem 0 0; font-size: .8125rem; color: var(--muted); }
+.status { margin: .75rem 0 0; min-height: 1.6em; font-size: .875rem; color: var(--text); }
+.received {
+  margin: 0; padding: .9rem 0;
+  font: 400 1rem/1.5 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--light);
+}
+.hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+
+/* ---- 6. footer ---- */
+/* bottom-left and bottom-right corners of the panel, half the previous size (Eric, 2026-09-09) */
+.foot {
+  max-width: none; margin: 0;
+  padding: 1.25rem var(--gutter) calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem;
+  font: 400 .375rem/1.6 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+}
+.foot a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--rule); }
+.foot a:hover { color: var(--text); }
+.foot .slot:empty { display: none; }
+
+/* short desktop viewports: keep the form above the fold at ≥ 768 px tall (§2 item 5) */
+/* short desktop viewports: the band's clamp already gives way, so only the rhythm tightens */
+@media (min-width: 768px) and (max-height: 820px) {
+  .sheet { padding-top: 1.25rem; }
+  .serial { margin-bottom: 1.25rem; font-size: .875rem; }
+  .headline { margin-bottom: .75rem; line-height: 1.1; font-size: clamp(1.75rem, min(4vw, 6.4vh), 3.25rem); }
+  .lede { margin-bottom: 1.25rem; }
+  .label { margin-bottom: .5rem; }
+  .consent { margin-top: .75rem; }
+}
+@media (max-width: 480px) {
+  .serial { font-size: .8125rem; letter-spacing: .12em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .submit, .stub, .stub img { transition: none !important; }
+}

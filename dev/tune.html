@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Signet — band tuner (dev)</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="data:,">
+<style>
+  body { margin: 0; background: #0e0e0e; color: #d8d5cf; font: 12px/1.5 ui-monospace, Menlo, monospace; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 10px 14px;
+         border-bottom: 1px solid #333; position: sticky; top: 0; background: #0e0e0e; z-index: 2; }
+  label { display: flex; gap: 6px; align-items: center; }
+  input[type=number] { width: 64px; } select, input, button { font: inherit; }
+  .stage { padding: 14px; overflow: auto; }
+  iframe { background: #000; border: 1px solid #333; display: block; transform-origin: 0 0; }
+  .ro { color: #9B968C; white-space: pre-wrap; } .ok { color: #7fc37f; } .bad { color: #e07070; }
+  .note { padding: 6px 14px 10px; color: #77736b; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <label>viewport
+    <select id="preset">
+      <option value="1280x720">laptop 1280×720</option>
+      <option value="1280x768">laptop 1280×768 (fold gate)</option>
+      <option value="1440x900" selected>MacBook 1440×900</option>
+      <option value="1536x864">Windows 1536×864</option>
+      <option value="1920x1080">monitor 1920×1080</option>
+      <option value="1024x1366">tablet portrait 1024×1366</option>
+      <option value="375x667">iPhone SE 375×667</option>
+      <option value="390x844">iPhone 390×844</option>
+      <option value="412x915">Android 412×915</option>
+      <option value="custom">custom</option>
+    </select>
+  </label>
+  <label>w <input id="w" type="number" value="1440"></label>
+  <label>h <input id="h" type="number" value="900"></label>
+  <label>band vh <input id="vh" type="range" min="40" max="55" step="0.5" value="48"> <span id="vhv">48</span></label>
+  <label>viewer
+    <select id="viewer">
+      <option value="">live viewer (the current bake)</option>
+      <option value="stub">stub (poster + timeline)</option>
+      <option value="stub:slow">stub · slow (ladder: 8 s timeout)</option>
+      <option value="stub:fail">stub · load error</option>
+      <option value="nowebgl">no WebGL2</option>
+    </select>
+  </label>
+  <label>intro
+    <select id="intro">
+      <option value="">as the page decides</option>
+      <option value="intro:play">force play</option>
+      <option value="intro:skip">force skip</option>
+    </select>
+  </label>
+  <button id="reload">reload</button>
+</div>
+<p class="note">Desktop band = clamp(360px, <b id="vhn">48</b>vh, 640px) — R2 says 45–50, tuned live. Phones use min(100vw, 60svh) and ignore the slider. The intro replays on every reload — the session-skip was retired 2026-09-09.</p>
+<div class="stage"><iframe id="f" title="page under tune" src="../index.html" data-signet-dev=""></iframe></div>
+<p class="ro" id="readout"></p>
+<script>
+  const $ = id => document.getElementById(id);
+  const f = $("f");
+  const state = () => ({ w: +$("w").value, h: +$("h").value, vh: +$("vh").value });
+  const size = () => {
+    const { w, h } = state();
+    f.width = w; f.height = h; f.style.width = w + "px"; f.style.height = h + "px";
+    const k = Math.min(1, (innerWidth - 32) / w);
+    f.style.transform = `scale(${k})`;
+    f.parentElement.style.height = Math.round(h * k) + 30 + "px";
+  };
+  const band = () => {
+    const { w, vh } = state();
+    try {
+      const root = f.contentDocument.documentElement;
+      if (w >= 768) root.style.setProperty("--band-h", `clamp(360px, ${vh}vh, 640px)`); else root.style.removeProperty("--band-h");
+    } catch {}
+    $("vhv").textContent = vh; $("vhn").textContent = vh;
+    setTimeout(readout, 50);
+  };
+  const readout = () => {
+    const { w, h } = state();
+    try {
+      const d = f.contentDocument, ih = f.contentWindow.innerHeight;
+      const b = d.getElementById("band").getBoundingClientRect();
+      const consent = d.getElementById("consent").getBoundingClientRect();   // §2 item 5: field, submit and consent line
+      const fold = consent.bottom <= ih;
+      $("readout").innerHTML =
+        `viewport ${w}×${h} · band ${Math.round(b.height)} px = ${(100 * b.height / ih).toFixed(1)} vh` +
+        ` · consent line bottom at ${Math.round(consent.bottom)} px of ${ih} → ` +
+        (fold ? `<span class="ok">above the fold by ${Math.round(ih - consent.bottom)} px</span>`
+              : `<span class="bad">below the fold by ${Math.round(consent.bottom - ih)} px</span>`) +
+        ` · light: ${d.documentElement.dataset.light || "bone"} · band state: ${d.getElementById("band").dataset.state}` +
+        ``;
+    } catch (e) { $("readout").textContent = "waiting for the frame…"; }
+  };
+  $("preset").addEventListener("change", e => {
+    if (e.target.value === "custom") return;
+    const [w, h] = e.target.value.split("x"); $("w").value = w; $("h").value = h; size(); band();
+  });
+  $("w").addEventListener("change", () => { $("preset").value = "custom"; size(); band(); });
+  $("h").addEventListener("change", () => { $("preset").value = "custom"; size(); band(); });
+  $("vh").addEventListener("input", band);
+  const reload = () => {
+    f.dataset.signetDev = [$("viewer").value, $("intro").value].filter(Boolean).join(" ");
+    f.contentWindow.location.reload();
+  };
+  $("viewer").addEventListener("change", reload);
+  $("intro").addEventListener("change", reload);
+  $("reload").addEventListener("click", reload);
+  f.addEventListener("load", () => { band(); });
+  addEventListener("resize", size);
+  setInterval(readout, 1000);
+  size();
+</script>
+</body>
+</html>

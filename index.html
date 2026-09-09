@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Signet by ASPIRIUM — Edition 001</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- §1a name cascade: noindex, no OG image, nothing public until both names clear -->
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Signet by ASPIRIUM. Edition 001.">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:,">
+<link rel="preload" href="assets/fonts/ASPIRIUM-Light.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/Literata-var.woff2" as="font" type="font/woff2" crossorigin>
+<!-- Source Serif 4 is body copy on the second screen only, so it loads normally rather than preloading. -->
+<link rel="stylesheet" href="css/site.css">
+<script>
+/* Holds the opening screen dark BEFORE first paint, so the lockup can never flash in ahead of the
+   ring. js/main.js then either keeps the hold (a live decode is coming) or drops it immediately
+   (reduced motion, or the effect switched off). The timeout is the last resort for the case where
+   main.js never loads at all — the page must never stay blank. */
+(function (d) {
+  d.documentElement.classList.add("is-opening");
+  setTimeout(function () { d.documentElement.classList.remove("is-opening"); }, 20000);
+})(document);
+</script>
+<script src="js/config.js" defer></script>
+<script src="js/mark.js" defer></script>
+<script src="js/main.js" defer></script>
+<!-- analytics slot (§7): cookieless only — Cloudflare Web Analytics or Plausible — added once hosting is ruled (§8). No consent banner. -->
+</head>
+<body>
+<main class="page">
+
+  <!-- PANEL 1 — the ring and the lockup, one screen (Eric, 2026-09-09). Sticky: the capture panel
+       slides over it while its contents drift and fade (js/main.js sets --p, css/site.css spends it). -->
+  <section class="panel panel--hero" id="hero">
+    <div class="hero__inner">
+
+      <!-- hero band: viewer mount + poster fallback. Black until the viewer is ready.
+           Height stays --band-h (R2 desktop 45–50 vh, R4 phones ~1:1) inside the full-screen panel:
+           the camera is vertical-fit, so a full-portrait band would crop the ring's sides. -->
+      <section class="band" id="band" data-state="boot" aria-label="Signet">
+        <div class="band__mount" id="viewer" role="img" aria-label="Signet ring, lit from within"></div>
+        <picture class="band__poster" id="poster">
+          <source media="(max-width: 767px)" srcset="assets/poster/signet-end-pose-1x1.jpg">
+          <img src="assets/poster/signet-end-pose-2x1.jpg" alt="Signet ring, lit from within"
+               width="2000" height="1000" fetchpriority="low" decoding="async">
+        </picture>
+
+      </section>
+
+      <!-- the lockup — live text in Literata, below the band and clear of the render (Eric, 2026-09-09).
+           js/mark.js splits each line into per-character cells and decodes them one at a time, held
+           until the ring's intro is 5% in. The characters here are the copy source; the h1 carries the
+           accessible name because letter-split text is otherwise read out letter by letter. -->
+      <h1 class="mark" id="mark" aria-label="The Signet by ASPIRIUM">
+        <span class="mark__line mark__line--sub" data-mark-line aria-hidden="true">The Signet by</span>
+        <span class="mark__line mark__line--name" data-mark-line aria-hidden="true">ASPIRIUM</span>
+      </h1>
+
+    </div>
+    <!-- scroll cue: the form is a screen away, so it has to be signposted. An arrow rather than a word
+         (Eric, 2026-09-09) — it needs no translating and carries no copy decision. -->
+    <div class="cue" id="cue" aria-hidden="true">
+      <svg viewBox="0 0 24 13" width="24" height="13" fill="none" stroke="currentColor"
+           stroke-width="1.3" stroke-linecap="square"><path d="M1.5 1.5 12 11.5 22.5 1.5"/></svg>
+    </div>
+  </section>
+
+  <!-- PANEL 2 — capture. Opaque, so it covers the sticky hero as it arrives. -->
+  <section class="panel panel--capture" id="capture-panel">
+    <div class="sheet">
+
+      <!-- one sentence — REMOVED 2026-09-07 (Eric): a new product intro follows. Slot stays here.
+           Previous text: "A signet ring with a companion inside. Leave an email and you will know the
+           date before anyone else does." (the brief's "Numbered editions, one drop." was already held
+           back under R6)
+           <p class="lede">…</p> -->
+
+      <!-- capture form: custom markup, present from first paint, works without JS once an endpoint exists (R5). -->
+      <form class="capture" id="capture" method="post" action="#" novalidate
+            data-copy-sending="Sending."
+            data-copy-failed="Not received. Check the address and try again."
+            data-copy-invalid="That does not read as an email address.">
+        <div class="capture__live">
+          <label class="label" for="email">Email</label>
+          <div class="capture__row">
+            <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
+                   autocapitalize="off" spellcheck="false" required aria-describedby="consent">
+          </div>
+          <p class="consent" id="consent">Sign up for our latest development updates.</p>
+          <button class="submit" type="submit">Submit</button>
+          <p class="status" role="status" aria-live="polite"></p>
+        </div>
+        <p class="received" hidden>Received.</p>
+        <input type="hidden" name="source" value=""><!-- ?c=NNN → tag (§7 serial-to-source) -->
+        <div class="hp" aria-hidden="true">
+          <label>Leave this field empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        </div>
+      </form>
+
+    </div>
+
+    <!-- footer: legal line bottom-left, privacy bottom-right (Eric, 2026-09-09). The build serial
+         WEB 000 was removed ahead of deployment. Social handles remain OPEN. -->
+    <footer class="foot">
+      <span>&copy; 2026 ASPIRIUM</span><!-- legal entity line: provisional wording -->
+      <a href="privacy.html">Privacy</a>
+    </footer>
+  </section>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Build output — the GitHub Actions workflow builds it on every push.
+/dist/
+
+# Regenerable by dev/fetch-fonts.sh: ~3 MB of upstream variable TTFs that only the
+# font build consumes. The subset WOFF2s under assets/fonts/ are what ship.
+/dev/font-src/
+
+# Regenerable by dev/capture-poster.mjs: the full-resolution capture masters.
+# The JPEGs beside them are what the page actually loads.
+/assets/poster/*.png
+
+.DS_Store
+node_modules/

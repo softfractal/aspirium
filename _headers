@@ -1,0 +1,20 @@
+# Cloudflare Pages headers (only honoured there; §8 hosting awaiting ruling).
+# Deploy dist/ (node build.mjs) so /assets/* names are content-hashed before they are marked immutable.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Robots-Tag: noindex, nofollow
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+/js/*
+  Cache-Control: public, max-age=31536000, immutable
+/viewer/*
+  Cache-Control: public, max-age=31536000, immutable
+/viewer/index.html
+  ! Cache-Control
+  Cache-Control: public, max-age=0, must-revalidate
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
