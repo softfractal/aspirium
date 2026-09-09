@@ -99,11 +99,19 @@ kept in the build only so the two never disagree.
 
    | Type | Name | Value | TTL |
    |---|---|---|---|
-   | A | `@` | `185.199.108.153` | 600 |
-   | A | `@` | `185.199.109.153` | 600 |
-   | A | `@` | `185.199.110.153` | 600 |
-   | A | `@` | `185.199.111.153` | 600 |
-   | CNAME | `www` | `softfractal.github.io` | 600 |
+   | A | `@` | `185.199.108.153` | 1/2 Hour |
+   | A | `@` | `185.199.109.153` | 1/2 Hour |
+   | A | `@` | `185.199.110.153` | 1/2 Hour |
+   | A | `@` | `185.199.111.153` | 1/2 Hour |
+   | CNAME | `www` | `softfractal.github.io` | 1/2 Hour |
+
+   GoDaddy's newer form groups the four addresses as four *values* on a single A record for `@`,
+   which is the same thing as four A records. Its TTL dropdown has no 600-second option and does not
+   need one: TTL governs how long resolvers cache an answer, and with an empty zone there is nothing
+   cached to expire, so it has no bearing on how quickly these first appear. It only matters when a
+   record *changes* — and since this host is explicitly temporary, a shorter TTL is worth a moment's
+   thought before the move rather than now. *1/2 Hour* is the right default; Custom `600` would make
+   a future switch propagate in ten minutes instead of thirty.
 
    Those four addresses are not quoted from documentation — they are what `softfractal.github.io`
    itself resolves to. There are no AAAA records to add: the Pages host publishes no IPv6. Leave
