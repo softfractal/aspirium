@@ -17,7 +17,9 @@ mkdirSync(out, { recursive: true });
 
 const walk = d => readdirSync(d).flatMap(n => { const p = join(d, n); return statSync(p).isDirectory() ? walk(p) : [p]; });
 const TEXT = new Set([".html", ".css", ".js", ".mjs", ".txt", ".md"]);
-const NOHASH = new Set(["_headers", "robots.txt", "index.html", "privacy.html"]);
+// CNAME must keep its exact name: GitHub Pages reads it out of the published artifact and
+// takes the custom domain from it, so a hashed copy would be ignored.
+const NOHASH = new Set(["_headers", "robots.txt", "index.html", "privacy.html", "CNAME"]);
 const hashName = (rel, buf) => {
   const e = extname(rel); const h = createHash("sha256").update(buf).digest("hex").slice(0, 8);
   return rel.slice(0, -e.length) + "." + h + e;
@@ -31,6 +33,7 @@ const order = [
   join(root, "viewer/bundle.js"), join(root, "viewer/index.html"),
   join(root, "js/config.js"), join(root, "js/mark.js"), join(root, "js/viewer-stub.js"), join(root, "js/viewer-embed.js"), join(root, "js/main.js"),
   join(root, "privacy.html"), join(root, "index.html"), join(root, "robots.txt"), join(root, "_headers"),
+  join(root, "CNAME"),
 ];
 const mapping = new Map(); // source rel → dist rel
 for (const abs of order) {
