@@ -80,6 +80,45 @@ Cloudflare's settings, if it is wanted: Framework preset *None*, build `node bui
 > `workflow_dispatch` only, so it never races — run it by hand from the Actions tab if it is ever
 > needed, after enabling Settings → Pages → Source → *GitHub Actions*.
 
+### Custom domain: aspirium.co
+
+The domain is registered at GoDaddy and uses GoDaddy's own nameservers
+(`ns15/ns16.domaincontrol.com`). Nothing has to be transferred and the nameservers do not have to
+change — GitHub Pages only needs records pointing at it.
+
+**Order matters.** Claim the domain on the repository *before* the DNS points at GitHub. A domain
+whose records point at Pages while no repository claims it can be claimed by somebody else. Note
+that shipping a `CNAME` file in the artifact is *not* enough on an Actions deploy: the file is
+published (it is served at `/CNAME`) but Pages ignores it and keeps serving the project path. It is
+kept in the build only so the two never disagree.
+
+1. **GitHub first.** Settings → Pages → Custom domain → `aspirium.co` → Save. It will warn that DNS
+   is not configured; that is expected and the claim still takes effect.
+2. **Then GoDaddy.** DNS Management for `aspirium.co`, add five records. There is nothing to delete
+   first — the zone currently has no A, AAAA or CNAME records at all.
+
+   | Type | Name | Value | TTL |
+   |---|---|---|---|
+   | A | `@` | `185.199.108.153` | 600 |
+   | A | `@` | `185.199.109.153` | 600 |
+   | A | `@` | `185.199.110.153` | 600 |
+   | A | `@` | `185.199.111.153` | 600 |
+   | CNAME | `www` | `softfractal.github.io` | 600 |
+
+   Those four addresses are not quoted from documentation — they are what `softfractal.github.io`
+   itself resolves to. There are no AAAA records to add: the Pages host publishes no IPv6. Leave
+   GoDaddy's *Domain Forwarding* off, or it will re-insert its own parking records.
+3. **Wait**, then check `dig +short aspirium.co`. When it returns those four addresses, GitHub
+   verifies the domain and issues a Let's Encrypt certificate. Usually minutes; GitHub allows itself
+   up to 24 hours.
+4. **Tick Enforce HTTPS** in Settings → Pages once the checkbox stops being greyed out.
+
+Two consequences to expect. `softfractal.github.io/aspirium/` will redirect to `aspirium.co` from
+step 1 onward, so the site is unreachable between claiming the domain and the records resolving.
+And once the site is served from a domain root instead of a project subpath, `robots.txt` starts
+being honoured — so the `Disallow: /` in it becomes a live decision rather than an inert file, and
+should be reviewed alongside the `noindex` meta tag.
+
 **Two things that would silently break a clone.** `viewer/bundle.js` is a real 13.2 MB file, not a
 symlink to the pipeline lane: git stores a symlink as its target path, so a clone or a CI checkout
 would otherwise get a dangling link and the hero band would 404. `dev/sync-viewer.sh` therefore
