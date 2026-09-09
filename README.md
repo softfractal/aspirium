@@ -4,10 +4,9 @@ _Build `WEB 000`, 2026-09-07. Implements `web_build_brief_v1_1.md` with the ruli
 
 ## Deploying
 
-The repository is `softfractal/aspirium`, **private**, default branch `main`. (Checked against the
-GitHub API unauthenticated: it returns 404 while the account resolves and our authenticated push
-succeeds, which is what a private repository looks like.) This folder is the repo root — the rest of
-the ASPIRIUM project, Blender masters and export pipeline and 1.6 GB of it, is deliberately outside.
+The repository is `softfractal/aspirium`, **public**, default branch `main`. This folder is the repo
+root — the rest of the ASPIRIUM project, Blender masters and export pipeline and 1.6 GB of it, is
+deliberately outside.
 
 **Vercel, built from this GitHub repo, is the current deploy path.** `vercel.json` holds the whole
 configuration, so the import needs nothing typed into a form: import at vercel.com/new, grant access
@@ -15,22 +14,57 @@ to `softfractal/aspirium`, done. It builds with `node build.mjs`, serves `dist/`
 install step because there are no dependencies and no lockfile to keep in sync. Every push to `main`
 is a production deployment; every other branch gets a preview URL.
 
-Vercel deploys **private** repositories on the free tier, and it serves from a domain root rather
-than a subpath, which means `robots.txt` is honoured alongside the `noindex` meta tag. `vercel.json`
+Vercel serves from a domain root rather than a subpath, which means `robots.txt` is honoured
+alongside the `noindex` meta tag. `vercel.json`
 also carries every rule from `_headers` across — the year-long immutable caching on each
 content-hashed asset, plus `nosniff`, `Referrer-Policy`, `Permissions-Policy` and `X-Robots-Tag`.
 
-**One thing the switch does not fix.** Vercel's Hobby tier is for non-commercial use and includes
-100 GB of transfer a month. At roughly 14 MB a visit — 13.2 MB of it the viewer bundle — that is
-about **7,100 visits**, the same order as the GitHub Pages cap that §8 of the brief rejected. A
-brand's pre-launch capture page is not a personal project, so Hobby is the wrong tier on its terms
-as well as its ceiling; Pro is $20/month.
+### Is a capture page "commercial"? It depends whose terms
 
-Cloudflare Pages is still the only option that clears both: static bandwidth unmetered under fair
-use, no commercial-use prohibition, private repos on the free tier, 500 builds a month and a 25 MiB
-per-asset limit that this build's largest file (12.9 MiB) fits under. `_headers` is already written
-for it, and the settings are Framework preset *None*, build `node build.mjs`, output `dist`,
-`NODE_VERSION` = `22`. Worth keeping in the drawer if a video does what PUFF's first one did.
+Reading the terms, not legal advice — and the three hosts do not say the same thing.
+
+- **Vercel** restricts its Hobby tier to *personal, non-commercial* use. The test is who benefits,
+  not whether money changes hands on the page. A pre-launch capture page for a product that will be
+  sold is commercial in that sense even though it takes no payment. Pro is $20/month.
+- **GitHub Pages** prohibits something narrower and more specific: sites *"primarily directed at
+  either facilitating commercial transactions or providing commercial software as a service."* A page
+  whose only action is an email field facilitates no transaction, so it does not meet that
+  description. Defensible, if not risk-free.
+- **Cloudflare Pages** carries no commercial-use restriction at all, and meters static bandwidth as
+  unmetered under fair use — 500 builds a month, 20,000 files, 25 MiB per asset. This build is 20
+  files and its largest is 12.9 MiB.
+
+### The cap is a symptom; the payload is the disease
+
+A first visit costs about **13.4 MB**, and 12.9 MB of that is one file. Against any 100 GB/month
+allowance that is roughly **7,600 visits**. Two pipeline-side changes, both already named in
+`HANDOFF_web.md` §6, would move that more than any host switch can:
+
+| Change | Per visit | Visits per 100 GB |
+|---|---|---|
+| today | 13.4 MB | 7,600 |
+| assets served as files instead of base64 inside the JS (§6 item 5) | ~9.5 MB | ~10,800 |
+| …plus the WebP/KTX2 texture conversion §3 already calls mandatory | ~5.5 MB | ~18,600 |
+
+The first one is nearly free: the bundle inlines 8.96 MB of GLB, decoder and maps as base64, which
+inflates them by a third to 12.9 MB. Shipping them as separate hashed files removes the inflation and
+makes them independently cacheable, so a returning visitor re-downloads none of it.
+
+### Using the GoDaddy domain
+
+Pointing the domain at any of these does **not** require transferring the registration.
+
+- **Vercel or GitHub Pages**: keep GoDaddy's DNS as it is and add records. Vercel wants an `A` record
+  at the apex to `76.76.21.21` and a `CNAME` for `www` to `cname.vercel-dns.com`. GitHub Pages wants
+  four `A` records at the apex (`185.199.108–111.153`) and a `CNAME` for `www`. GoDaddy supports both
+  shapes, so this is a five-minute edit in its DNS panel.
+- **Cloudflare Pages**: the domain stays registered at GoDaddy; only the **nameservers** change to
+  Cloudflare's two. That is a nameserver update, not a registrar transfer — no 60-day lock, no auth
+  code, no fee, and reversible by pasting GoDaddy's nameservers back. It is the one extra step, and
+  it is what buys the unmetered bandwidth and the absent commercial clause.
+
+Cloudflare's settings, if it is wanted: Framework preset *None*, build `node build.mjs`, output
+`dist`, `NODE_VERSION` = `22`. `_headers` is already written for it.
 
 > **Only connect one of them.** Vercel, Cloudflare Pages and the Actions workflow can all deploy this
 > repo. If Cloudflare was connected earlier, disconnect it before importing to Vercel, or every push
