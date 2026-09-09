@@ -2,6 +2,49 @@
 
 _Build `WEB 000`, 2026-09-07. Implements `web_build_brief_v1_1.md` with the rulings in `decisions_log_v1_0.md` and Eric's build-session rulings of 2026-09-07 applied. Static files, no framework, no build step needed to run; `build.mjs` produces the hashed `dist/` for deployment._
 
+## Deploying
+
+The repository is `softfractal/aspirium`, **private**, default branch `main`. This folder is the
+repo root — the rest of the ASPIRIUM project (Blender masters, the export pipeline, 1.6 GB of it)
+is deliberately outside it.
+
+`.github/workflows/pages.yml` builds on every push to `main` and publishes `dist/` to GitHub Pages.
+`build.mjs` has no dependencies, so the job is just a checkout and Node. **One setting must be
+changed by hand before the first deploy succeeds:** Settings → Pages → Build and deployment →
+Source → *GitHub Actions*.
+
+Three things to decide before that switch is flipped:
+
+- **Pages on a private repository needs a paid plan.** On Free, Pages only publishes from public
+  repositories. Making this one public is not just a hosting choice: `decisions_log_v1_0.md` records
+  the Signet name as *clearance pending*, and §1a of the brief says the name is not to be used
+  publicly until it clears. GitHub indexes public repository contents, and forks and caches are not
+  retractable. The deployed page is gated by its `noindex` meta tag either way; a public repo is the
+  part that is not.
+- **`robots.txt` stops working.** At a project page the site is served from `/aspirium/`, so the file
+  lands at `/aspirium/robots.txt`, which no crawler reads. The `<meta name="robots" content="noindex,
+  nofollow">` in every page is what actually gates indexing there. Every other path in the build is
+  relative, so the subpath itself is fine.
+- **`_headers` does nothing on Pages.** It is a Cloudflare file. The immutable cache headers on the
+  hashed assets and the `nosniff` / `Referrer-Policy` / `X-Robots-Tag` headers are all lost; Pages
+  serves its own defaults. The build still content-hashes everything, so nothing breaks, but repeat
+  visitors re-validate more than they would on Cloudflare.
+
+**Bandwidth is the real constraint.** The deploy is about 14 MB, 13.2 MB of it the viewer bundle,
+so a visit costs roughly that. Against GitHub's soft 100 GB/month allowance that is about **7,400
+visits a month**, and its terms of service prohibit commercial use. §8 of the brief already
+recommends Cloudflare Pages for exactly this reason, and `_headers` is written for it. If a video
+does what PUFF's first one did, this cap is gone in an afternoon.
+
+**Two things that would silently break a clone.** `viewer/bundle.js` is a real 13.2 MB file, not a
+symlink to the pipeline lane: git stores a symlink as its target path, so a clone or a CI checkout
+would otherwise get a dangling link and the hero band would 404. `dev/sync-viewer.sh` therefore
+copies rather than links, and every pipeline rebake adds another 13 MB blob to git history — worth
+watching, and the reason to consider Git LFS if the bake is going to iterate. Separately, the
+scripts in `dev/` that reach outside this folder (`build-fonts.sh`, `fetch-fonts.sh`,
+`capture-poster.mjs`, `sync-viewer.sh`) only work inside a full ASPIRIUM project checkout; a bare
+clone of this repository can build and test the page but cannot regenerate its fonts or posters.
+
 ## Run · tune · check
 
 | What | Where |
