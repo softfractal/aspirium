@@ -4,37 +4,47 @@ _Build `WEB 000`, 2026-09-07. Implements `web_build_brief_v1_1.md` with the ruli
 
 ## Deploying
 
-The repository is `softfractal/aspirium`, **private**, default branch `main`. This folder is the
-repo root — the rest of the ASPIRIUM project (Blender masters, the export pipeline, 1.6 GB of it)
-is deliberately outside it.
+The repository is `softfractal/aspirium`, public, default branch `main`. This folder is the repo
+root — the rest of the ASPIRIUM project (Blender masters, the export pipeline, 1.6 GB of it) is
+deliberately outside it.
 
-`.github/workflows/pages.yml` builds on every push to `main` and publishes `dist/` to GitHub Pages.
-`build.mjs` has no dependencies, so the job is just a checkout and Node. **One setting must be
-changed by hand before the first deploy succeeds:** Settings → Pages → Build and deployment →
-Source → *GitHub Actions*.
+**Cloudflare Pages, built from this GitHub repo, is the deploy path.** Cloudflare's Git integration
+watches the repository and runs the build itself; nothing needs to be pushed by hand and no
+credentials live in the repo. In the Cloudflare dashboard: *Workers & Pages → Create → Pages →
+Connect to Git*, authorise the Cloudflare GitHub App for this repository, then:
 
-Three things to decide before that switch is flipped:
+| Setting | Value |
+|---|---|
+| Production branch | `main` |
+| Framework preset | None |
+| Build command | `node build.mjs` |
+| Build output directory | `dist` |
+| Root directory | `/` |
+| Environment variable | `NODE_VERSION` = `22` |
 
-- **Pages on a private repository needs a paid plan.** On Free, Pages only publishes from public
-  repositories. Making this one public is not just a hosting choice: `decisions_log_v1_0.md` records
-  the Signet name as *clearance pending*, and §1a of the brief says the name is not to be used
-  publicly until it clears. GitHub indexes public repository contents, and forks and caches are not
-  retractable. The deployed page is gated by its `noindex` meta tag either way; a public repo is the
-  part that is not.
-- **`robots.txt` stops working.** At a project page the site is served from `/aspirium/`, so the file
-  lands at `/aspirium/robots.txt`, which no crawler reads. The `<meta name="robots" content="noindex,
-  nofollow">` in every page is what actually gates indexing there. Every other path in the build is
-  relative, so the subpath itself is fine.
-- **`_headers` does nothing on Pages.** It is a Cloudflare file. The immutable cache headers on the
-  hashed assets and the `nosniff` / `Referrer-Policy` / `X-Robots-Tag` headers are all lost; Pages
-  serves its own defaults. The build still content-hashes everything, so nothing breaks, but repeat
-  visitors re-validate more than they would on Cloudflare.
+`build.mjs` has no dependencies, so there is no install step and no lockfile to keep in sync. Every
+push to `main` produces a deployment; every other branch produces a preview URL.
 
-**Bandwidth is the real constraint.** The deploy is about 14 MB, 13.2 MB of it the viewer bundle,
-so a visit costs roughly that. Against GitHub's soft 100 GB/month allowance that is about **7,400
-visits a month**, and its terms of service prohibit commercial use. §8 of the brief already
-recommends Cloudflare Pages for exactly this reason, and `_headers` is written for it. If a video
-does what PUFF's first one did, this cap is gone in an afternoon.
+This is what §8 of the brief recommends, and choosing it fixes three things GitHub Pages could not:
+
+- **Bandwidth stops being the constraint.** A visit costs about 14 MB, 13.2 MB of it the viewer
+  bundle. Against GitHub's soft 100 GB/month that is roughly 7,400 visits, and its terms prohibit
+  commercial use. Cloudflare's free plan meters static bandwidth as unmetered under fair use, with
+  500 builds a month, 20,000 files and 25 MiB per asset. This build is 20 files and its largest is
+  12.9 MiB, so it clears every ceiling with room.
+- **`_headers` starts working.** It is a Cloudflare file and does nothing on GitHub Pages. On
+  Cloudflare the immutable cache headers on the content-hashed assets take effect, along with
+  `nosniff`, `Referrer-Policy` and `Permissions-Policy`.
+- **`robots.txt` starts working.** A GitHub project page serves the site from `/aspirium/`, so the
+  file lands where no crawler reads it. Cloudflare serves from the root of `*.pages.dev` or a custom
+  domain, so the file is honoured. That now matters in the other direction: the disallow and the
+  `noindex` meta tag were put there for the name clearance, which has since cleared, so both are
+  live decisions rather than gates.
+
+`.github/workflows/pages.yml` is kept as a **manual fallback** and no longer runs on push — two
+deploy paths racing would be worse than one, and its final step fails whenever GitHub Pages is not
+enabled, marking every commit with a red cross. To use it: enable Settings → Pages → Source →
+*GitHub Actions*, then run the workflow from the Actions tab.
 
 **Two things that would silently break a clone.** `viewer/bundle.js` is a real 13.2 MB file, not a
 symlink to the pipeline lane: git stores a symlink as its target path, so a clone or a CI checkout

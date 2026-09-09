@@ -1,4 +1,5 @@
-# Builds the page and publishes it to GitHub Pages on every push to main.
+# Builds the page and publishes it to GitHub Pages. Manual fallback only — Cloudflare Pages is
+# the live deploy path.
 #
 # Repo setting required once, by hand: Settings → Pages → Build and deployment →
 # Source: "GitHub Actions". Without it this workflow runs and the deploy step fails.
@@ -8,9 +9,12 @@
 # rewrites the references, which is what makes the immutable cache headers safe.
 name: Deploy page to GitHub Pages
 
+# Manual only. Cloudflare Pages is the deploy path (see README), and it builds this repo on every
+# push by itself. Leaving this on `push` would run a second, competing deploy whose final step fails
+# whenever GitHub Pages is not enabled, putting a red cross on every commit. Kept, not deleted, so
+# GitHub Pages stays available as a fallback: run it from the Actions tab, and enable
+# Settings -> Pages -> Source -> GitHub Actions first.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
