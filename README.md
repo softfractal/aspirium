@@ -4,56 +4,48 @@ _Build `WEB 000`, 2026-09-07. Implements `web_build_brief_v1_1.md` with the ruli
 
 ## Deploying
 
-The repository is `softfractal/aspirium`, public, default branch `main`. This folder is the repo
-root — the rest of the ASPIRIUM project (Blender masters, the export pipeline, 1.6 GB of it) is
-deliberately outside it.
+The repository is `softfractal/aspirium`, **private**, default branch `main`. (Checked against the
+GitHub API unauthenticated: it returns 404 while the account resolves and our authenticated push
+succeeds, which is what a private repository looks like.) This folder is the repo root — the rest of
+the ASPIRIUM project, Blender masters and export pipeline and 1.6 GB of it, is deliberately outside.
 
-**Cloudflare Pages, built from this GitHub repo, is the deploy path.** Cloudflare's Git integration
-watches the repository and runs the build itself; nothing needs to be pushed by hand and no
-credentials live in the repo. In the Cloudflare dashboard: *Workers & Pages → Create → Pages →
-Connect to Git*, authorise the Cloudflare GitHub App for this repository, then:
+**Vercel, built from this GitHub repo, is the current deploy path.** `vercel.json` holds the whole
+configuration, so the import needs nothing typed into a form: import at vercel.com/new, grant access
+to `softfractal/aspirium`, done. It builds with `node build.mjs`, serves `dist/`, and skips the
+install step because there are no dependencies and no lockfile to keep in sync. Every push to `main`
+is a production deployment; every other branch gets a preview URL.
 
-| Setting | Value |
-|---|---|
-| Production branch | `main` |
-| Framework preset | None |
-| Build command | `node build.mjs` |
-| Build output directory | `dist` |
-| Root directory | `/` |
-| Environment variable | `NODE_VERSION` = `22` |
+Vercel deploys **private** repositories on the free tier, and it serves from a domain root rather
+than a subpath, which means `robots.txt` is honoured alongside the `noindex` meta tag. `vercel.json`
+also carries every rule from `_headers` across — the year-long immutable caching on each
+content-hashed asset, plus `nosniff`, `Referrer-Policy`, `Permissions-Policy` and `X-Robots-Tag`.
 
-`build.mjs` has no dependencies, so there is no install step and no lockfile to keep in sync. Every
-push to `main` produces a deployment; every other branch produces a preview URL.
+**One thing the switch does not fix.** Vercel's Hobby tier is for non-commercial use and includes
+100 GB of transfer a month. At roughly 14 MB a visit — 13.2 MB of it the viewer bundle — that is
+about **7,100 visits**, the same order as the GitHub Pages cap that §8 of the brief rejected. A
+brand's pre-launch capture page is not a personal project, so Hobby is the wrong tier on its terms
+as well as its ceiling; Pro is $20/month.
 
-This is what §8 of the brief recommends, and choosing it fixes three things GitHub Pages could not:
+Cloudflare Pages is still the only option that clears both: static bandwidth unmetered under fair
+use, no commercial-use prohibition, private repos on the free tier, 500 builds a month and a 25 MiB
+per-asset limit that this build's largest file (12.9 MiB) fits under. `_headers` is already written
+for it, and the settings are Framework preset *None*, build `node build.mjs`, output `dist`,
+`NODE_VERSION` = `22`. Worth keeping in the drawer if a video does what PUFF's first one did.
 
-- **Bandwidth stops being the constraint.** A visit costs about 14 MB, 13.2 MB of it the viewer
-  bundle. Against GitHub's soft 100 GB/month that is roughly 7,400 visits, and its terms prohibit
-  commercial use. Cloudflare's free plan meters static bandwidth as unmetered under fair use, with
-  500 builds a month, 20,000 files and 25 MiB per asset. This build is 20 files and its largest is
-  12.9 MiB, so it clears every ceiling with room.
-- **`_headers` starts working.** It is a Cloudflare file and does nothing on GitHub Pages. On
-  Cloudflare the immutable cache headers on the content-hashed assets take effect, along with
-  `nosniff`, `Referrer-Policy` and `Permissions-Policy`.
-- **`robots.txt` starts working.** A GitHub project page serves the site from `/aspirium/`, so the
-  file lands where no crawler reads it. Cloudflare serves from the root of `*.pages.dev` or a custom
-  domain, so the file is honoured. That now matters in the other direction: the disallow and the
-  `noindex` meta tag were put there for the name clearance, which has since cleared, so both are
-  live decisions rather than gates.
-
-`.github/workflows/pages.yml` is kept as a **manual fallback** and no longer runs on push — two
-deploy paths racing would be worse than one, and its final step fails whenever GitHub Pages is not
-enabled, marking every commit with a red cross. To use it: enable Settings → Pages → Source →
-*GitHub Actions*, then run the workflow from the Actions tab.
+> **Only connect one of them.** Vercel, Cloudflare Pages and the Actions workflow can all deploy this
+> repo. If Cloudflare was connected earlier, disconnect it before importing to Vercel, or every push
+> builds twice and two live URLs drift apart. `.github/workflows/pages.yml` is already demoted to
+> `workflow_dispatch` only, so it never races — run it by hand from the Actions tab if it is ever
+> needed, after enabling Settings → Pages → Source → *GitHub Actions*.
 
 **Two things that would silently break a clone.** `viewer/bundle.js` is a real 13.2 MB file, not a
 symlink to the pipeline lane: git stores a symlink as its target path, so a clone or a CI checkout
 would otherwise get a dangling link and the hero band would 404. `dev/sync-viewer.sh` therefore
 copies rather than links, and every pipeline rebake adds another 13 MB blob to git history — worth
-watching, and the reason to consider Git LFS if the bake is going to iterate. Separately, the
-scripts in `dev/` that reach outside this folder (`build-fonts.sh`, `fetch-fonts.sh`,
-`capture-poster.mjs`, `sync-viewer.sh`) only work inside a full ASPIRIUM project checkout; a bare
-clone of this repository can build and test the page but cannot regenerate its fonts or posters.
+watching, and the reason to consider Git LFS if the bake is going to iterate. Separately, the scripts
+in `dev/` that reach outside this folder (`build-fonts.sh`, `fetch-fonts.sh`, `capture-poster.mjs`,
+`sync-viewer.sh`) only work inside a full ASPIRIUM project checkout; a bare clone can build and test
+the page but cannot regenerate its fonts or posters.
 
 ## Run · tune · check
 
