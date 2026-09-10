@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Signet by ASPIRIUM — Edition 001</title>
+<title>Signet by ASPIRIUM</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <!-- §1a name cascade: noindex, no OG image, nothing public until both names clear -->
 <meta name="robots" content="noindex, nofollow">
@@ -55,9 +55,14 @@
            render and the lockup, appears only once the intro lands and rotation actually unlocks,
            and retires on the first drag. Decorative, so it is hidden from assistive tech. -->
       <div class="drag" id="drag" aria-hidden="true">
-        <svg class="drag__pointer" viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-          <path d="M6 2 L6 19 L10.2 15.2 L12.9 21.2 L15.6 20 L12.9 14 L17.6 13.6 Z"/>
+        <svg class="drag__pointer" viewBox="0 0 24 24" width="30" height="30"
+             fill="none" stroke="currentColor" stroke-width="1.55"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 12V4.6a1.75 1.75 0 0 1 3.5 0V11"/>
+          <path d="M13.5 11V9.6a1.75 1.75 0 0 1 3.5 0V11.4"/>
+          <path d="M17 11.4v-1.1a1.75 1.75 0 0 1 3.5 0V15a5.5 5.5 0 0 1-5.5 5.5h-1.9a5.3 5.3 0 0 1-4.6-2.65l-2.4-4.15a1.75 1.75 0 0 1 3.03-1.75L10.5 14"/>
         </svg>
+        <span class="drag__label">Drag to rotate</span>
       </div>
 
       <!-- the lockup — live text in Literata, below the band and clear of the render (Eric, 2026-09-09).
