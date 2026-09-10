@@ -64,7 +64,8 @@ const STATE = `({
     return { on: d.classList.contains("is-on"), opacity: +getComputedStyle(d).opacity,
              top: Math.round(b.top), bottom: Math.round(b.bottom),
              pointer: getComputedStyle(d).pointerEvents,
-             label: (d.querySelector(".drag__label") || {}).textContent }; })(),
+             pointer_svg: !!d.querySelector(".drag__pointer"),
+             extras: d.querySelectorAll(".drag__trail, .drag__label").length }; })(),
   cueIsArrow: !!document.querySelector("#cue svg") && !(document.getElementById("cue") || {}).textContent.trim(),
   submitStyle: (() => { const b = document.querySelector(".submit"); if (!b) return null; const c = getComputedStyle(b);
     return { size: c.fontSize, border: c.borderTopColor, color: c.color, height: c.height, padX: c.paddingLeft }; })(),
@@ -228,7 +229,9 @@ try {
     const s17 = await at(16.8);
     check("desktop · 15 s intro end → interactive; 15.5 s wordmark → warm", s17.interactive && s17.light === "warm", JSON.stringify({ light: s17.light, interactive: s17.interactive }));
     check("hint · appears once the intro lands and rotation unlocks", s17.hint.on && s17.hint.opacity > 0.9,
-      JSON.stringify({ on: s17.hint.on, opacity: s17.hint.opacity, label: s17.hint.label }));
+      JSON.stringify({ on: s17.hint.on, opacity: s17.hint.opacity }));
+    check("hint · is the cursor arrow alone, no label and no trail", s17.hint.pointer_svg && s17.hint.extras === 0,
+      JSON.stringify({ arrow: s17.hint.pointer_svg, extras: s17.hint.extras }));
     { const b = s17.boxes.band, m = s17.boxes.mark, h = s17.hint;
       check("hint · sits in the void between the render and the lockup", h.top >= b.b && h.bottom <= m.t,
         `hint ${h.top}-${h.bottom} · band ends ${b.b} · lockup starts ${m.t}`); }

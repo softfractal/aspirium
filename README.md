@@ -143,7 +143,7 @@ the page but cannot regenerate its fonts or posters.
 | the page, served | http://localhost:8734/site/ — the project's launch config (`python3 -m http.server 8734` at the project root) |
 | the page, from disk | double-click `index.html`. Works too: the scripts are classic (no ES modules) and the viewer bridge uses postMessage. Chrome refuses web fonts on `file://`, so from disk the page falls back to any *installed* ASPIRIUM / Literata / Source Serif 4, then to the system mono and Georgia |
 | band tuner, fold gauge, viewer switches (R2) | http://localhost:8734/site/dev/tune.html |
-| acceptance run, headless Chrome (72 checks, screenshots) | `node dev/check.mjs [base-url] [out-dir]` — base may be `http://…/site/`, `…/site/dist/` or `file:///…/site/` |
+| acceptance run, headless Chrome (73 checks, screenshots) | `node dev/check.mjs [base-url] [out-dir]` — base may be `http://…/site/`, `…/site/dist/` or `file:///…/site/` |
 | viewer shell after a rebake | `dev/sync-viewer.sh` (regenerates `viewer/index.html`, re-points `viewer/bundle.js`) |
 | fallback posters from the current bake | `node dev/capture-poster.mjs --w 2000 --h 1000 --out assets/poster/signet-end-pose-2x1.png`, then `--w 1200 --h 1200 --out …-1x1.png`; convert with `sips -s format jpeg -s formatOptions 82 in.png --out out.jpg` |
 | web fonts | `dev/fetch-fonts.sh` once, then `dev/build-fonts.sh` |
@@ -206,7 +206,7 @@ Panel 1 carries one mark. The house wordmark that briefly sat over the render wa
 
 The ring is a live render, and nothing on screen said so. `#drag` is the pipeline check page's
 pointer cue (`three-viewer/demo`, `#cue`) ported into the void the lockup's `--mark-drop` opens up:
-a swiping hand, a dashed trail and a small label. Its position is derived rather than guessed — the
+a swiping cursor arrow, alone — the check page's hand, dashed trail and label were all dropped (Eric: the hand's index finger read as wrong, and a conventional pointer is the safer glyph). Its position is derived rather than guessed — the
 band occupies `0..--band-h` and the gap runs from there to `--band-h * (1 + drop)`, so the centre of
 that gap is `--band-h * (1 + drop/2)`. The check page's pill, backdrop blur and drop shadows are
 dropped; the brand law allows no glow, and white on black needs none.

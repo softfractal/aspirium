@@ -175,25 +175,20 @@ body {
   position: absolute; left: 50%;
   top: calc(var(--band-h) * (1 + var(--mark-drop, .25) / 2));
   transform: translate(-50%, -50%);
-  display: flex; flex-direction: column; align-items: center; gap: .55rem;
+  display: flex; align-items: center; justify-content: center;
   color: var(--muted);
   opacity: 0; visibility: hidden;
   transition: opacity .6s ease, visibility 0s linear .6s;
   pointer-events: none;                     /* the ring underneath keeps every gesture */
 }
 .drag.is-on { opacity: 1; visibility: visible; transition: opacity .6s ease; }
-.drag__hand { display: block; animation: drag-swipe 2.8s cubic-bezier(.45, 0, .55, 1) infinite; }
-.drag__trail {
-  width: 124px; height: 1px;
-  background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 13px);
-}
-.drag__label { font: 400 .6875rem/1 var(--body); letter-spacing: .18em; text-transform: uppercase; }
+.drag__pointer { display: block; animation: drag-swipe 2.8s cubic-bezier(.45, 0, .55, 1) infinite; }
 @keyframes drag-swipe {
   0%, 6%     { transform: translateX(-44px) rotate(-9deg); }
   50%        { transform: translateX(44px)  rotate(9deg); }
   94%, 100%  { transform: translateX(-44px) rotate(-9deg); }
 }
-@media (prefers-reduced-motion: reduce) { .drag__hand { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .drag__pointer { animation: none; } }
 
 /* ---- the lockup: live text in Literata, below the band and clear of the render ---- */
 .mark {
