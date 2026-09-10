@@ -59,6 +59,12 @@ const STATE = `({
              foot: r(".foot"), copy: r(".foot span"), privacy: r(".foot a") };
   })(),
   cueOpacity: (() => { const c = document.getElementById("cue"); return c ? +getComputedStyle(c).opacity : null; })(),
+  hint: (() => { const d = document.getElementById("drag"); if (!d) return null;
+    const b = d.getBoundingClientRect();
+    return { on: d.classList.contains("is-on"), opacity: +getComputedStyle(d).opacity,
+             top: Math.round(b.top), bottom: Math.round(b.bottom),
+             pointer: getComputedStyle(d).pointerEvents,
+             label: (d.querySelector(".drag__label") || {}).textContent }; })(),
   cueIsArrow: !!document.querySelector("#cue svg") && !(document.getElementById("cue") || {}).textContent.trim(),
   submitStyle: (() => { const b = document.querySelector(".submit"); if (!b) return null; const c = getComputedStyle(b);
     return { size: c.fontSize, border: c.borderTopColor, color: c.color, height: c.height, padX: c.paddingLeft }; })(),
@@ -165,6 +171,9 @@ try {
       // line boxes is that margin minus the sub line's leading, so assert a range rather than a point
       check("lockup · the two lines are spaced by the doubled gap", !!sub && !!nm && nm.t - sub.b >= 4 && nm.t - sub.b <= 26,
         `gap ${nm && sub ? nm.t - sub.b : "?"} px between the lines`); }
+    check("hint · the drag cue is hidden before rotation unlocks", !!s0.hint && !s0.hint.on && s0.hint.opacity === 0,
+      JSON.stringify({ on: s0.hint && s0.hint.on, opacity: s0.hint && s0.hint.opacity }));
+    check("hint · takes no pointer events, so the ring keeps every gesture", s0.hint.pointer === "none", String(s0.hint.pointer));
     check("cue · is an arrow, not the word SCROLL", s0.cueIsArrow === true, String(s0.cueIsArrow));
     check("footer · the build serial is gone ahead of deployment", s0.buildSerial === false, `WEB 000 present: ${s0.buildSerial}`);
     { const c = s0.boxes.copy, pv = s0.boxes.privacy, f = s0.boxes.foot;
@@ -218,6 +227,20 @@ try {
     check("desktop · bone and locked until the intro ends", s14.light === "bone" && !s14.interactive);
     const s17 = await at(16.8);
     check("desktop · 15 s intro end → interactive; 15.5 s wordmark → warm", s17.interactive && s17.light === "warm", JSON.stringify({ light: s17.light, interactive: s17.interactive }));
+    check("hint · appears once the intro lands and rotation unlocks", s17.hint.on && s17.hint.opacity > 0.9,
+      JSON.stringify({ on: s17.hint.on, opacity: s17.hint.opacity, label: s17.hint.label }));
+    { const b = s17.boxes.band, m = s17.boxes.mark, h = s17.hint;
+      check("hint · sits in the void between the render and the lockup", h.top >= b.b && h.bottom <= m.t,
+        `hint ${h.top}-${h.bottom} · band ends ${b.b} · lockup starts ${m.t}`); }
+    await p.screenshot(join(OUT, "drag-hint.png"));
+    // a drag retires it: the stub reports onDragged on its first pointerdown, exactly as the live
+    // viewer shell does from inside its iframe
+    { const y = Math.round((s17.boxes.band.t + s17.boxes.band.b) / 2);
+      await p.send("Input.dispatchMouseEvent", { type: "mousePressed", x: 640, y, button: "left", clickCount: 1, buttons: 1 });
+      await p.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: 640, y, button: "left", clickCount: 1, buttons: 0 }); }
+    await sleep(900);
+    const sDrag = await p.evaluate(STATE);
+    check("hint · retires on the first drag", !sDrag.hint.on, JSON.stringify({ on: sDrag.hint.on, opacity: sDrag.hint.opacity }));
     const s18 = await at(18.5);
     check("mark · fully set by 18.5 s (run ends ~13.25 s), no cell left hidden",
       !s18.mark.running && s18.mark.runs === 1 && s18.mark.opacity === 1 && s18.mark.pending === 0 && s18.mark.scrambling === 0,
@@ -307,6 +330,7 @@ try {
     const s = await p.evaluate(STATE);
     check(`ladder · ${tok} → poster shown, warm at once`, s.band === "poster" && s.posterShown && s.light === "warm", JSON.stringify({ band: s.band, light: s.light }));
     if (tok === "nowebgl") {
+      check("ladder · no drag hint on the poster — a poster does not rotate", !s.hint.on, JSON.stringify({ on: s.hint.on }));
       check("ladder · the lockup still decodes with no ring to pace against", s.mark.runs === 1 && !s.mark.held, JSON.stringify({ runs: s.mark.runs, held: s.mark.held }));
       // The poster is same-origin, composed like the live render and laid out object-fit:contain in
       // the band — so its first lit row IS where the ring's top edge lands on screen. Comparing that

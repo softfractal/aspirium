@@ -74,6 +74,10 @@ window.SIGNET_CONFIG = {
     pauseAt: 0.9,   // fraction of the first screen after which the viewer stops rendering (battery)
   },
 
+  // The drag hint in the void between the render and the lockup. Shown when the ring's intro lands
+  // and rotation unlocks; retired by the first drag, or by autoHideMs if nobody touches it.
+  dragHint: { enabled: true, autoHideMs: 12000 },
+
   capture: {
     endpoint: "",
     method: "POST",

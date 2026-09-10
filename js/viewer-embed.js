@@ -22,6 +22,7 @@
 //     onIntroProgress(f), 0…1 through the 15 s intro, ~every 150 ms — the page paces the lockup on it
 //     onIntroEnd(),     intro landed on its last frame — rotation unlocks in the bundle itself
 //     onWordmarkLit(),  wordmark appears (0.5 s into power_on) — the page's warm accent moves with it
+//     onDragged(),      the first pointer to land on the canvas after rotation unlocks — retires the drag hint
 //     onError(err),     unrecoverable — the page falls back to the poster
 //   });
 //   viewer.play(); viewer.pause(); viewer.restart(); viewer.setInteractive(bool); viewer.destroy();
@@ -52,6 +53,7 @@
         case "introProgress": opts.onIntroProgress?.(e.data.detail); break;
         case "introEnd": if (!ended) { ended = true; opts.onIntroEnd?.(); } break;
         case "wordmarkLit": if (!lit) { lit = true; opts.onWordmarkLit?.(); } break;
+        case "dragged": opts.onDragged?.(); break;
         case "error": fail(new Error(e.data.detail || "viewer error")); break;
       }
     };

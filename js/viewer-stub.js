@@ -81,6 +81,7 @@
     const spring = () => { root.style.transition = "transform .55s cubic-bezier(.2,.8,.2,1)"; root.style.transform = ""; };
     root.addEventListener("pointerdown", e => {
       if (!interactive || drag) return;
+      opts.onDragged?.();                              // retires the page's drag hint
       drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
       root.setPointerCapture(e.pointerId);
       root.style.transition = "none";

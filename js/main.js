@@ -76,6 +76,19 @@
     mark.run(ms);                                    // the run itself lifts the hold, on its first frame
   };
 
+  // ---- drag hint ----
+  // The ring is a live render, not a video, and nothing says so. Shown the moment rotation
+  // unlocks, retired by the first drag or by autoHideMs, whichever comes first.
+  const dragEl = document.getElementById("drag");
+  const hint = SITE.dragHint || {};
+  let hintTimer = 0;
+  const hideHint = () => { clearTimeout(hintTimer); dragEl && dragEl.classList.remove("is-on"); };
+  const showHint = () => {
+    if (!dragEl || hint.enabled === false) return;
+    dragEl.classList.add("is-on");
+    hintTimer = setTimeout(hideHint, hint.autoHideMs ?? 12000);
+  };
+
   // ---- hero band: mount, fallback ladder, pause when unseen ----
   let viewer = null;
   let state = "boot"; // boot → live | poster
@@ -85,6 +98,7 @@
     if (viewer) { try { viewer.destroy(); } catch { /* already gone */ } viewer = null; }
     mountEl.hidden = true;
     band.dataset.state = "poster";
+    hideHint();                                      // a poster does not rotate
     warm(); // fallback paths: warm state immediately (§2)
     decode(wmRun.fallback ?? 2600);                  // no intro to follow: decode on the poster
     if (reason) console.info("[signet] poster:", reason instanceof Error ? reason.message : reason);
@@ -134,7 +148,7 @@
           if (fraction >= startAt) decode(loadMs);
         },
         onIntroEnd() {
-          if (state === "live") { viewer?.setInteractive(true); band.dataset.interactive = ""; } // §4: rotation only after the intro
+          if (state === "live") { viewer?.setInteractive(true); band.dataset.interactive = ""; showHint(); } // §4: rotation only after the intro
           if (intro !== "play") decode(wmRun.fallback ?? 2600);   // reduced motion / return visit: no intro to pace against
         },
         onWordmarkLit() {
@@ -142,6 +156,7 @@
           warm();
           if (mark && wmOn.lit !== false) mark.run(wmRun.lit ?? 1100);   // the DOM mark decodes as the ring's does
         },
+        onDragged() { hideHint(); },        // they have found it; stop telling them
         onError(err) { clearTimeout(timer); showPoster(err); },
       });
       if (state === "poster") { try { v.destroy(); } catch { /* noop */ } return; }

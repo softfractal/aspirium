@@ -143,7 +143,7 @@ the page but cannot regenerate its fonts or posters.
 | the page, served | http://localhost:8734/site/ — the project's launch config (`python3 -m http.server 8734` at the project root) |
 | the page, from disk | double-click `index.html`. Works too: the scripts are classic (no ES modules) and the viewer bridge uses postMessage. Chrome refuses web fonts on `file://`, so from disk the page falls back to any *installed* ASPIRIUM / Literata / Source Serif 4, then to the system mono and Georgia |
 | band tuner, fold gauge, viewer switches (R2) | http://localhost:8734/site/dev/tune.html |
-| acceptance run, headless Chrome (66 checks, screenshots) | `node dev/check.mjs [base-url] [out-dir]` — base may be `http://…/site/`, `…/site/dist/` or `file:///…/site/` |
+| acceptance run, headless Chrome (72 checks, screenshots) | `node dev/check.mjs [base-url] [out-dir]` — base may be `http://…/site/`, `…/site/dist/` or `file:///…/site/` |
 | viewer shell after a rebake | `dev/sync-viewer.sh` (regenerates `viewer/index.html`, re-points `viewer/bundle.js`) |
 | fallback posters from the current bake | `node dev/capture-poster.mjs --w 2000 --h 1000 --out assets/poster/signet-end-pose-2x1.png`, then `--w 1200 --h 1200 --out …-1x1.png`; convert with `sips -s format jpeg -s formatOptions 82 in.png --out out.jpg` |
 | web fonts | `dev/fetch-fonts.sh` once, then `dev/build-fonts.sh` |
@@ -201,6 +201,26 @@ Panel 1 carries one mark. The house wordmark that briefly sat over the render wa
 `mode: "sequential"` is what makes it one by one: cells before the resolve point show their real character, `activeCells` (1) scrambles at the point, and every cell after it renders **nothing**. Nineteen cells over 11.25 s is about 590 ms each. `mode: "scramble"` is the reference nav's all-at-once behaviour (unajartera.com: 450 ms hover, 220 ms tap, charset `ACEFGHIJKLPRSTUVY23456789`) and is what the short hover and tap runs still use — one-by-one over 450 ms would read as a wipe across a mostly empty lockup. Unresolved cells hold a glyph for `churnMs` (80 ms) so a long run reads as code rather than static.
 
 **The opening screen is empty.** Nothing is lit until the ring's animation starts. An inline script in `<head>` adds `is-opening` to the root element *before first paint*, so the lockup can never flash in ahead of the ring; `js/main.js` keeps that hold only when a decode is actually coming and drops it immediately otherwise (reduced motion, trigger off). The hold is lifted by the `signet:decode-start` event `mark.js` fires on its first frame. Two backstops exist so the page can never sit blank: `blankMaxMs` (20 s) in main.js, and a matching timeout in the inline script for the case where main.js never loads at all.
+
+## The drag hint
+
+The ring is a live render, and nothing on screen said so. `#drag` is the pipeline check page's
+pointer cue (`three-viewer/demo`, `#cue`) ported into the void the lockup's `--mark-drop` opens up:
+a swiping hand, a dashed trail and a small label. Its position is derived rather than guessed — the
+band occupies `0..--band-h` and the gap runs from there to `--band-h * (1 + drop)`, so the centre of
+that gap is `--band-h * (1 + drop/2)`. The check page's pill, backdrop blur and drop shadows are
+dropped; the brand law allows no glow, and white on black needs none.
+
+It is honest about when rotation is available. It appears on `onIntroEnd`, which is the same signal
+that unlocks dragging, so it never invites a gesture the viewer would ignore. It never appears on
+the poster path, because a poster does not rotate. It retires the moment someone actually drags,
+and otherwise after `dragHint.autoHideMs` (12 s) so it does not nag.
+
+That last part needed a new signal. The viewer runs in an iframe, so a pointer landing on the canvas
+is invisible to the page. The shell's reporter now listens for `pointerdown` and posts `dragged`,
+which `js/viewer-embed.js` surfaces as `onDragged`. It only fires once rotation has unlocked, so an
+idle click during the intro does not count as having found it. `.drag` itself takes no pointer
+events, so the hint can never intercept the gesture it is advertising.
 
 ## Typefaces
 

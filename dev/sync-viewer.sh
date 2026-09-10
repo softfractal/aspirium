@@ -53,6 +53,12 @@ bridge = r'''<script>
     if (!(ready && ended && lit)) setTimeout(poll, 150);
   };
   setTimeout(poll, 150);
+  // The first pointer that lands on the canvas retires the drag hint on the page. Fired once,
+  // and only after rotation has actually unlocked, so an idle click during the intro does not
+  // count as "they know they can drag it".
+  addEventListener("pointerdown", () => {
+    if (window.__unlocked && __unlocked()) post("dragged");
+  }, { capture: true });
   addEventListener("message", e => {
     if (e.source !== parent || !e.data || e.data.signet !== "page") return;
     const unlocked = !!(window.__unlocked && __unlocked());     // after the intro, __freeze(false) would replay power_on
